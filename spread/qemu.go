@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 
 	"golang.org/x/net/context"
@@ -94,6 +95,9 @@ func (p *qemuProvider) Reuse(ctx context.Context, rsystem *ReuseSystem, system *
 }
 
 func systemPath(system *System) string {
+	if snapUserCommon, ok := os.LookupEnv("SNAP_USER_COMMON"); ok {
+		return filepath.Join(snapUserCommon, "qemu", system.Image+".img")
+	}
 	return os.ExpandEnv("$HOME/.spread/qemu/" + system.Image + ".img")
 }
 
