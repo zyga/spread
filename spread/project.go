@@ -57,7 +57,12 @@ type Backend struct {
 	Discard  string
 
 	// Only for qemu so far.
-	Memory Size
+	Memory       Size
+	Architecture string `yaml:"architecture"`
+	CPUs         int    `yaml:"cpus"`
+	Cores        int    `yaml:"cores"`
+	Threads      int    `yaml:"threads"`
+	Sockets      int    `yaml:"sockets"`
 
 	// Only for Linode and Google so far.
 	Plan     string

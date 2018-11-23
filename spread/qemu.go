@@ -110,11 +110,42 @@ func (p *qemuProvider) Allocate(ctx context.Context, system *System) (Server, er
 	if p.backend.Memory > 0 {
 		mem = int(p.backend.Memory / mb)
 	}
+	cores := 1
+	if p.backend.Cores > 0 {
+		cores = p.backend.Cores
+	}
+	threads := 1
+	if p.backend.Threads > 0 {
+		threads = p.backend.Threads
+	}
+	sockets := 1
+	if p.backend.Sockets > 0 {
+		sockets = p.backend.Sockets
+	}
+	cpus := cores * threads * sockets
+	if p.backend.CPUs > 0 {
+		cpus = p.backend.CPUs
+	}
+	qemu_prog := "qemu-kvm"
+	if p.backend.Architecture != "" {
+		qemu_prog = "qemu-system-" + p.backend.Architecture
+	}
 
 	serial := fmt.Sprintf("telnet:127.0.0.1:%d,server,nowait", port+100)
 	monitor := fmt.Sprintf("telnet:127.0.0.1:%d,server,nowait", port+200)
 	fwd := fmt.Sprintf("user,hostfwd=tcp:127.0.0.1:%d-:22", port)
-	cmd := exec.Command("kvm", "-snapshot", "-m", strconv.Itoa(mem), "-net", "nic", "-net", fwd, "-serial", serial, "-monitor", monitor, path)
+	cmd := exec.Command(qemu_prog,
+		// Memory options
+		"-m", strconv.Itoa(mem),
+		// CPU options
+		"-smp", fmt.Sprintf("cpus=%d,cores=%d,threads=%d,sockets=%d", cpus, cores, threads, sockets),
+		// Network options
+		"-net", "nic", "-net", fwd,
+		// Misc options
+		"-snapshot",
+		"-serial", serial,
+		"-monitor", monitor,
+		path)
 	if os.Getenv("SPREAD_QEMU_GUI") != "1" {
 		cmd.Args = append([]string{cmd.Args[0], "-nographic"}, cmd.Args[1:]...)
 	}
