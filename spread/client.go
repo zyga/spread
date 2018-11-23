@@ -12,6 +12,8 @@ import (
 
 	// used instead of just importing "context" for compatibility
 	// with go1.6 which is used in the xenial autopkgtests
+	"github.com/pkg/errors"
+	"github.com/pkg/sftp"
 	"golang.org/x/net/context"
 
 	"golang.org/x/crypto/ssh"
@@ -166,42 +168,26 @@ func (c *Client) SetKillTimeout(timeout time.Duration) {
 	}
 }
 
+// WriteFile writes a file on the remote system.
 func (c *Client) WriteFile(path string, data []byte) error {
-	session, err := c.sshc.NewSession()
+	client, err := sftp.NewClient(c.sshc)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "cannot create sftp client")
 	}
-	defer session.Close()
+	defer client.Close()
 
-	stdin, err := session.StdinPipe()
+	file, err := client.OpenFile(path, os.O_WRONLY|os.O_CREATE)
 	if err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("cannot open file %q", path))
 	}
-	defer stdin.Close()
+	defer file.Close()
 
-	errch := make(chan error, 2)
-	go func() {
-		_, err := stdin.Write(data)
-		if err != nil {
-			errch <- err
-		}
-		errch <- stdin.Close()
-	}()
-
-	debugf("Writing to %s on %s:\n-----\n%# v\n-----", path, c.job, string(data))
-
-	var stderr safeBuffer
-	session.Stderr = &stderr
-	cmd := fmt.Sprintf(`%s/bin/bash -c "cat >'%s'"`, c.sudo(), path)
-	err = c.runCommand(session, cmd, nil, &stderr)
+	n, err := io.Copy(file, bytes.NewReader(data))
 	if err != nil {
-		err = outputErr(stderr.Bytes(), err)
-		return fmt.Errorf("cannot write to %s on %s: %v", path, c.job, err)
+		return errors.Wrap(err, "cannot copy file data")
 	}
+	fmt.Printf("Wrote %d bytes", n)
 
-	if err := <-errch; err != nil {
-		printf("Error writing to %s on %s: %v", path, c.job, err)
-	}
 	return nil
 }
 
