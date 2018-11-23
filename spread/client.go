@@ -224,6 +224,20 @@ const (
 	shellOutput
 )
 
+func (m outputMode) String() string {
+	switch m {
+	case traceOutput:
+		return "trace"
+	case combinedOutput:
+		return "combined"
+	case splitOutput:
+		return "split"
+	case shellOutput:
+		return "shell"
+	}
+	return "???"
+}
+
 func (c *Client) Run(script string, dir string, env *Environment) error {
 	_, err := c.run(script, dir, env, combinedOutput)
 	return err
