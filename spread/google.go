@@ -549,7 +549,6 @@ func (p *googleProvider) waitServerBoot(ctx context.Context, s *googleServer) er
 			return fmt.Errorf("cannot wait for %s to boot: interrupted", s)
 		}
 	}
-	panic("unreachable")
 }
 
 func (p *googleProvider) checkLabel(s *googleServer) error {
@@ -752,7 +751,6 @@ func (p *googleProvider) waitOperation(ctx context.Context, s *googleServer, ver
 			return nil, fmt.Errorf("cannot %s %s: interrupted", verb, s)
 		}
 	}
-	panic("unreachable")
 }
 
 func (p *googleProvider) checkKey() error {
