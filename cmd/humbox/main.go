@@ -32,11 +32,6 @@ var (
 	tokenFlag = flag.Bool("token", false, "Generate hash and salt for an account token")
 )
 
-var httpServer = &http.Server{
-	ReadTimeout:  10 * time.Second,
-	WriteTimeout: 30 * time.Second,
-}
-
 var httpClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
@@ -140,16 +135,18 @@ func run() error {
 	}
 
 	ch := make(chan error, 2)
+	server := http.Server{
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+	}
 
 	if *httpFlag != "" && (*httpsFlag == "" || *acmeFlag == "") {
-		server := *httpServer
 		server.Addr = *httpFlag
 		go func() {
 			ch <- server.ListenAndServe()
 		}()
 	}
 	if *httpsFlag != "" {
-		server := *httpServer
 		server.Addr = *httpsFlag
 		if *acmeFlag != "" {
 			if err := os.MkdirAll(filepath.Join(*dirFlag, "acme"), 0700); err != nil {
