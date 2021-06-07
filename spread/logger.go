@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/niemeyer/pretty"
+	"github.com/kr/pretty"
 )
 
 // Logger defines the logger where messages should be sent to.

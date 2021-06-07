@@ -11,7 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/niemeyer/pretty"
+	"github.com/kr/pretty"
+
 	"github.com/snapcore/spread/spread"
 )
 

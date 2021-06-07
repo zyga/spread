@@ -18,7 +18,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 
-	"github.com/niemeyer/pretty"
+	"github.com/kr/pretty"
+
 	"regexp"
 	"strconv"
 	"unicode"

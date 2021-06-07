@@ -3,7 +3,7 @@ module github.com/snapcore/spread
 go 1.16
 
 require (
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
+	github.com/kr/pretty v0.2.1
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c

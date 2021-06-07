@@ -17,7 +17,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/niemeyer/pretty"
+	"github.com/kr/pretty"
 
 	"gopkg.in/tomb.v2"
 )

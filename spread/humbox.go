@@ -16,7 +16,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/niemeyer/pretty"
+	"github.com/kr/pretty"
 )
 
 func Humbox(p *Project, b *Backend, o *Options) Provider {
