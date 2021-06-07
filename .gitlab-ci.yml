@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Huawei Inc.
+
+stages:
+  - compliance
+  - test
+  - build
+
+include:
+  - project: OSTC/infrastructure/pipelines
+    file: 'reuse.yaml'
+
+reuse:
+  extends: .reuse
+  allow_failure: true
+
+.go:
+  image: golang:latest
+  variables:
+    REPO_NAME: github.com/snapcore/spread
+    GOPATH: $CI_PROJECT_DIR/.go
+  before_script:
+  - mkdir -p $GOPATH/src/"$(dirname "$REPO_NAME")"
+  - ln -svf "$CI_PROJECT_DIR" "$GOPATH/src/$REPO_NAME"
+  - mkdir -p "$CI_PROJECT_DIR"/.go
+  - cd "$GOPATH/src/$REPO_NAME"
+
+format:
+  extends: .go
+  stage: test
+  script:
+    - go fmt ./...
+
+test:
+  extends: .go
+  stage: test
+  script:
+    - go vet ./...
+    - go get github.com/boumenot/gocover-cobertura
+    - go test -coverprofile=coverage.txt -covermode count ./...
+    - go tool cover -func=coverage.txt
+    - '"$GOPATH"/bin/gocover-cobertura <coverage.txt >coverage.xml'
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .go/pkg/mod
+  artifacts:
+    paths:
+      - coverage.xml
+    reports:
+      cobertura: coverage.xml
+
+# TODO: run spread self-test as well
+
+build:
+  extends: .go
+  stage: build
+  script:
+    - go build -o spread.bin ./cmd/spread
+    - go build -o humbox.bin ./cmd/humbox
+  artifacts:
+    paths:
+      - spread.bin
+      - humbox.bin
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .go/pkg/mod
