@@ -128,8 +128,6 @@ func (c *Client) dialOnReboot(prevUptime time.Time) error {
 		case <-retry.C:
 		}
 	}
-
-	return nil
 }
 
 func (c *Client) Close() error {
@@ -304,7 +302,6 @@ func (c *Client) run(script string, dir string, env *Environment, mode outputMod
 			return nil, err
 		}
 	}
-	panic("unreachable")
 }
 
 func (c *Client) getUptime() (time.Time, error) {
@@ -738,7 +735,6 @@ func (c *Client) runCommand(session *ssh.Session, cmd string, stdout, stderr io.
 			}
 		}
 	}
-	panic("unreachable")
 }
 
 func tail(output []byte) []byte {

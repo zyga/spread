@@ -1,3 +1,13 @@
+OH-Spread
+=========
+
+OH (Open Harmony) Spread is the friendly fork of spread created to develop new
+features useful for testing operating system images and testing in
+micro-controller environment.
+
+The fork keeps the original import path `github.com/snapcore/spread` in order
+to facilitate sending patches upstream.
+
 Spread
 ======
 

@@ -17,7 +17,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/niemeyer/pretty"
+	"github.com/kr/pretty"
 
 	"gopkg.in/tomb.v2"
 )
@@ -1127,7 +1127,6 @@ func (p *linodeProvider) waitJob(s *linodeServer, verb string, jobID int) (*lino
 			}
 		}
 	}
-	panic("unreachable")
 }
 
 func (p *linodeProvider) hasActiveJob(s *linodeServer, action string, flags doFlags) (found bool, err error) {
