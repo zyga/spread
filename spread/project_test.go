@@ -1,7 +1,6 @@
 package spread_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -79,7 +78,7 @@ suites:
   summary: mock tests
 `)
 	tmpdir := c.MkDir()
-	err := ioutil.WriteFile(filepath.Join(tmpdir, "spread.yaml"), spreadYaml, 0644)
+	err := os.WriteFile(filepath.Join(tmpdir, "spread.yaml"), spreadYaml, 0644)
 	c.Assert(err, IsNil)
 	err = os.MkdirAll(filepath.Join(tmpdir, "tests"), 0755)
 	c.Assert(err, IsNil)

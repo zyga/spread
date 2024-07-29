@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
@@ -927,7 +927,7 @@ func (p *googleProvider) dofl(method, subpath string, params interface{}, result
 			return fmt.Errorf("cannot perform Google request: %v", err)
 		}
 
-		data, err = ungzip(ioutil.ReadAll(resp.Body))
+		data, err = ungzip(io.ReadAll(resp.Body))
 		resp.Body.Close()
 		if err != nil {
 			return fmt.Errorf("cannot read Google response: %v", err)
@@ -983,5 +983,5 @@ func ungzip(data []byte, err error) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("data seems compressed but corrupted")
 	}
-	return ioutil.ReadAll(r)
+	return io.ReadAll(r)
 }
