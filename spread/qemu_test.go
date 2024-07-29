@@ -77,7 +77,7 @@ func (s *qemuSuite) TestQemuCmdWithEfi(c *C) {
 			Backend: "qemu",
 			Bios:    tc.BiosSetting,
 		}
-		cmd, err := spread.QemuCmd(ms, "/path/to/image", 512, 9999)
+		cmd, err := spread.QemuCmd(ms, "/path/to/image", 512, 1, 9999)
 		if tc.expectedErr == "" {
 			c.Assert(err, IsNil)
 		} else {

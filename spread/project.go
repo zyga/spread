@@ -56,7 +56,8 @@ type Backend struct {
 	Discard  string
 
 	// Only for qemu so far.
-	Memory Size
+	Memory    Size
+	CoreCount int `yaml:"core-count"`
 
 	// Only for Linode and Google so far.
 	Plan     string
