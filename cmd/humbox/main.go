@@ -19,7 +19,7 @@ import (
 
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/crypto/blake2b"
-	"golang.org/x/crypto/ssh/terminal"
+	terminal "golang.org/x/term"
 )
 
 var (
