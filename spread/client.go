@@ -301,7 +301,6 @@ func (c *Client) run(script string, dir string, env *Environment, mode outputMod
 			return nil, err
 		}
 	}
-	panic("unreachable")
 }
 
 func (c *Client) getBootID() (string, error) {
@@ -730,7 +729,6 @@ func (c *Client) runCommand(session *ssh.Session, cmd string, stdout, stderr io.
 			}
 		}
 	}
-	panic("unreachable")
 }
 
 func tail(output []byte) []byte {
