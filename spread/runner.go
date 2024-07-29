@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,8 +17,6 @@ import (
 	"time"
 
 	"gopkg.in/tomb.v2"
-	"math"
-	"math/rand"
 )
 
 type Options struct {

@@ -1,14 +1,13 @@
 package spread
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
-
-	"golang.org/x/net/context"
 )
 
 var ovmfDefaultPath = "/usr/share/OVMF/OVMF_CODE.fd"

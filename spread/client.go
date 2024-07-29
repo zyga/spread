@@ -2,24 +2,21 @@ package spread
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
-
-	// used instead of just importing "context" for compatibility
-	// with go1.6 which is used in the xenial autopkgtests
-	"golang.org/x/net/context"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
-	"net"
-	"regexp"
-	"strconv"
-	"syscall"
 )
 
 var sshDial = ssh.Dial

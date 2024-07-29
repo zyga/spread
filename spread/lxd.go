@@ -2,9 +2,9 @@ package spread
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/net/context"
+	"gopkg.in/yaml.v2"
 )
 
 func LXD(p *Project, b *Backend, o *Options) Provider {

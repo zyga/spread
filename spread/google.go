@@ -3,25 +3,25 @@ package spread
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
+	"unicode"
+
 	"time"
 
-	"golang.org/x/net/context"
+	"github.com/niemeyer/pretty"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
-
-	"github.com/niemeyer/pretty"
-	"regexp"
-	"strconv"
-	"unicode"
 )
 
 func Google(p *Project, b *Backend, o *Options) Provider {
