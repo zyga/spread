@@ -108,7 +108,7 @@ func (s *qemuSuite) TestQemuDeviceBackends(c *C) {
 	}{
 		{
 			map[string]string{},
-			fmt.Sprintf("file=%s,format=raw,if=none", path),
+			fmt.Sprintf("file=%s", path),
 			"netdev=user0,driver=e1000",
 			"",
 		},
@@ -116,7 +116,7 @@ func (s *qemuSuite) TestQemuDeviceBackends(c *C) {
 			map[string]string{
 				"drive": "virtio",
 			},
-			fmt.Sprintf("file=%s,format=raw,if=virtio", path),
+			fmt.Sprintf("file=%s,if=virtio", path),
 			"netdev=user0,driver=e1000",
 			"",
 		},
@@ -124,7 +124,7 @@ func (s *qemuSuite) TestQemuDeviceBackends(c *C) {
 			map[string]string{
 				"network": "virtio-net-pci",
 			},
-			fmt.Sprintf("file=%s,format=raw,if=none", path),
+			fmt.Sprintf("file=%s", path),
 			"netdev=user0,driver=virtio-net-pci",
 			"",
 		},
@@ -133,7 +133,7 @@ func (s *qemuSuite) TestQemuDeviceBackends(c *C) {
 				"drive":   "virtio",
 				"network": "virtio-net-pci",
 			},
-			fmt.Sprintf("file=%s,format=raw,if=virtio", path),
+			fmt.Sprintf("file=%s,if=virtio", path),
 			"netdev=user0,driver=virtio-net-pci",
 			"",
 		},
@@ -151,7 +151,7 @@ func (s *qemuSuite) TestQemuDeviceBackends(c *C) {
 			},
 			"",
 			"",
-			`invalid backend for device drive: ""`,
+			"",
 		},
 	}
 

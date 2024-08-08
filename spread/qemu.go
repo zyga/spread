@@ -127,7 +127,7 @@ func setDefaultDeviceBackends(system *System) error {
 	}
 
 	defaults := map[string]string{
-		"drive":   "none",
+		"drive":   "",
 		"network": "e1000",
 	}
 
@@ -145,7 +145,7 @@ func setDefaultDeviceBackends(system *System) error {
 	r := regexp.MustCompile(`^\S+$`)
 
 	for device, backend := range system.DeviceBackends {
-		if !r.Match([]byte(backend)) {
+		if backend != "" && !r.Match([]byte(backend)) {
 			return fmt.Errorf(`invalid backend for device %s: "%s"`, device, backend)
 		}
 	}
@@ -163,7 +163,12 @@ func qemuCmd(system *System, path string, mem, coreCount, port int) (*exec.Cmd, 
 	monitor := fmt.Sprintf("telnet:127.0.0.1:%d,server,nowait", port+200)
 	fwd := fmt.Sprintf("user,id=user0,hostfwd=tcp:127.0.0.1:%d-:22", port)
 	netdev := fmt.Sprintf("netdev=user0,driver=%s", system.DeviceBackends["network"])
-	drivedev := fmt.Sprintf("file=%s,format=raw,if=%s", path, system.DeviceBackends["drive"])
+	var drivedev string
+	if d := system.DeviceBackends["drive"]; d != "" {
+		drivedev = fmt.Sprintf("file=%s,if=%s", path, d)
+	} else {
+		drivedev = fmt.Sprintf("file=%s", path)
+	}
 	cmd := exec.Command("qemu-system-x86_64",
 		"-enable-kvm",
 		"-snapshot",
