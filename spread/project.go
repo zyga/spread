@@ -939,6 +939,9 @@ func (p *Project) Jobs(options *Options) ([]*Job, error) {
 							if task.Samples > 1 {
 								job.Name += "#" + strconv.Itoa(sample)
 							}
+							if options.Filter != nil && !options.Filter.Pass(job) {
+								continue
+							}
 
 							sprenv := envmap{stringer("$SPREAD_*"), NewEnvironment(
 								"SPREAD_JOB", job.Name,
@@ -957,10 +960,6 @@ func (p *Project) Jobs(options *Options) ([]*Job, error) {
 								return nil, err
 							}
 							job.Environment = env.Variant(variant)
-
-							if options.Filter != nil && !options.Filter.Pass(job) {
-								continue
-							}
 
 							jobs = append(jobs, job)
 
