@@ -2,6 +2,7 @@ package spread
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -866,121 +868,163 @@ func (p *Project) Jobs(options *Options) ([]*Job, error) {
 		return nil, fmt.Errorf("remote project path must be absolute and not /: %s", p.RemotePath)
 	}
 
+	var suiteWg sync.WaitGroup
+	suiteWg.Add(len(p.Suites))
+	errCh := make(chan error, len(p.Suites))
+
+	jobCh := make(chan *Job)
+	var jobDrainWg sync.WaitGroup
+	jobDrainWg.Add(1)
+	go func() {
+		defer jobDrainWg.Done()
+		for job := range jobCh {
+			jobs = append(jobs, job)
+		}
+	}()
+
 	for _, suite := range p.Suites {
-		senv := envmap{suite, suite.Environment}
-		sevr := strmap{suite, evars(suite.Environment, "+")}
-		svar := strmap{suite, suite.Variants}
-		sbke := strmap{suite, suite.Backends}
-		ssys := strmap{suite, suite.Systems}
+		go func(suite *Suite) {
+			defer suiteWg.Done()
 
-		for _, task := range suite.Tasks {
-			tenv := envmap{task, task.Environment}
-			tevr := strmap{task, evars(task.Environment, "+")}
-			tvar := strmap{task, task.Variants}
-			tbke := strmap{task, task.Backends}
-			tsys := strmap{task, task.Systems}
+			senv := envmap{suite, suite.Environment}
+			sevr := strmap{suite, evars(suite.Environment, "+")}
+			svar := strmap{suite, suite.Variants}
+			sbke := strmap{suite, suite.Backends}
+			ssys := strmap{suite, suite.Systems}
 
-			backends, err := evalstr("backends", pbke, sbke, tbke)
-			if err != nil {
-				return nil, err
-			}
+			var taskWg sync.WaitGroup
+			taskWg.Add(len(suite.Tasks))
+			defer taskWg.Wait()
+			for _, task := range suite.Tasks {
+				go func(task *Task) {
+					defer taskWg.Done()
+					tenv := envmap{task, task.Environment}
+					tevr := strmap{task, evars(task.Environment, "+")}
+					tvar := strmap{task, task.Variants}
+					tbke := strmap{task, task.Backends}
+					tsys := strmap{task, task.Systems}
 
-			for _, bname := range backends {
-				backend := p.Backends[bname]
-				benv := envmap{backend, backend.Environment}
-				bevr := strmap{backend, evars(backend.Environment, "+")}
-				bvar := strmap{backend, backend.Variants}
-				bsys := strmap{backend, backend.systemNames()}
-
-				systems, err := evalstr("systems", bsys, ssys, tsys)
-				if err != nil {
-					return nil, err
-				}
-
-				for _, sysname := range systems {
-					system := backend.Systems[sysname]
-					// not for us
-					if system == nil {
-						continue
-					}
-					yenv := envmap{system, system.Environment}
-					yevr := strmap{system, evars(system.Environment, "+")}
-					yvar := strmap{system, system.Variants}
-
-					priority := evaloint(task.Priority, suite.Priority, system.Priority, backend.Priority)
-
-					strmaps := []strmap{pevr, bevr, bvar, yevr, yvar, sevr, svar, tevr, tvar}
-					variants, err := evalstr("variants", strmaps...)
+					backends, err := evalstr("backends", pbke, sbke, tbke)
 					if err != nil {
-						return nil, err
+						errCh <- err
+						return
 					}
 
-					for _, variant := range variants {
-						if variant == "" && len(variants) > 1 {
-							continue
+					for _, bname := range backends {
+						backend := p.Backends[bname]
+						benv := envmap{backend, backend.Environment}
+						bevr := strmap{backend, evars(backend.Environment, "+")}
+						bvar := strmap{backend, backend.Variants}
+						bsys := strmap{backend, backend.systemNames()}
+
+						systems, err := evalstr("systems", bsys, ssys, tsys)
+						if err != nil {
+							errCh <- err
+							return
 						}
 
-						for sample := 1; sample <= task.Samples; sample++ {
-							job := &Job{
-								Project:  p,
-								Backend:  backend,
-								System:   system,
-								Suite:    p.Suites[task.Suite],
-								Task:     task,
-								Variant:  variant,
-								Sample:   sample,
-								Priority: priority,
-							}
-							if job.Variant == "" {
-								job.Name = fmt.Sprintf("%s:%s:%s", job.Backend.Name, job.System.Name, job.Task.Name)
-							} else {
-								job.Name = fmt.Sprintf("%s:%s:%s:%s", job.Backend.Name, job.System.Name, job.Task.Name, job.Variant)
-							}
-							if task.Samples > 1 {
-								job.Name += "#" + strconv.Itoa(sample)
-							}
-							if options.Filter != nil && !options.Filter.Pass(job) {
+						for _, sysname := range systems {
+							system := backend.Systems[sysname]
+							// not for us
+							if system == nil {
 								continue
 							}
+							yenv := envmap{system, system.Environment}
+							yevr := strmap{system, evars(system.Environment, "+")}
+							yvar := strmap{system, system.Variants}
 
-							sprenv := envmap{stringer("$SPREAD_*"), NewEnvironment(
-								"SPREAD_JOB", job.Name,
-								"SPREAD_PROJECT", job.Project.Name,
-								"SPREAD_PATH", job.Project.RemotePath,
-								"SPREAD_BACKEND", job.Backend.Name,
-								"SPREAD_SYSTEM", job.System.Name,
-								"SPREAD_SUITE", job.Suite.Name,
-								"SPREAD_TASK", job.Task.Name,
-								"SPREAD_VARIANT", job.Variant,
-								"SPREAD_SAMPLE", strconv.Itoa(job.Sample),
-							)}
+							priority := evaloint(task.Priority, suite.Priority, system.Priority, backend.Priority)
 
-							env, err := evalenv(cmdcache, true, sprenv, penv, benv, yenv, senv, tenv)
+							strmaps := []strmap{pevr, bevr, bvar, yevr, yvar, sevr, svar, tevr, tvar}
+							variants, err := evalstr("variants", strmaps...)
 							if err != nil {
-								return nil, err
+								errCh <- err
+								return
 							}
-							job.Environment = env.Variant(variant)
 
-							jobs = append(jobs, job)
+							for _, variant := range variants {
+								if variant == "" && len(variants) > 1 {
+									continue
+								}
 
-							if !job.Backend.Manual {
-								manualBackends = false
-							}
-							if !job.System.Manual {
-								manualSystems = false
-							}
-							if !job.Suite.Manual {
-								manualSuites = false
-							}
-							if !job.Task.Manual {
-								manualTasks = false
+								for sample := 1; sample <= task.Samples; sample++ {
+									job := &Job{
+										Project:  p,
+										Backend:  backend,
+										System:   system,
+										Suite:    p.Suites[task.Suite],
+										Task:     task,
+										Variant:  variant,
+										Sample:   sample,
+										Priority: priority,
+									}
+									if job.Variant == "" {
+										job.Name = fmt.Sprintf("%s:%s:%s", job.Backend.Name, job.System.Name, job.Task.Name)
+									} else {
+										job.Name = fmt.Sprintf("%s:%s:%s:%s", job.Backend.Name, job.System.Name, job.Task.Name, job.Variant)
+									}
+									if task.Samples > 1 {
+										job.Name += "#" + strconv.Itoa(sample)
+									}
+									if options.Filter != nil && !options.Filter.Pass(job) {
+										continue
+									}
+
+									sprenv := envmap{stringer("$SPREAD_*"), NewEnvironment(
+										"SPREAD_JOB", job.Name,
+										"SPREAD_PROJECT", job.Project.Name,
+										"SPREAD_PATH", job.Project.RemotePath,
+										"SPREAD_BACKEND", job.Backend.Name,
+										"SPREAD_SYSTEM", job.System.Name,
+										"SPREAD_SUITE", job.Suite.Name,
+										"SPREAD_TASK", job.Task.Name,
+										"SPREAD_VARIANT", job.Variant,
+										"SPREAD_SAMPLE", strconv.Itoa(job.Sample),
+									)}
+
+									env, err := evalenv(cmdcache, true, sprenv, penv, benv, yenv, senv, tenv)
+									if err != nil {
+										errCh <- err
+										return
+									}
+									job.Environment = env.Variant(variant)
+
+									jobCh <- job
+
+									// TODO: racy
+									if !job.Backend.Manual {
+										manualBackends = false
+									}
+									if !job.System.Manual {
+										manualSystems = false
+									}
+									if !job.Suite.Manual {
+										manualSuites = false
+									}
+									if !job.Task.Manual {
+										manualTasks = false
+									}
+								}
 							}
 						}
-					}
-				}
 
+					}
+				}(task)
 			}
-		}
+		}(suite)
+	}
+
+	suiteWg.Wait()    // Wait for all the suite logic to finish
+	close(errCh)      // Prevent further errors from being added
+	close(jobCh)      // Prevent further jobs from being enqueued
+	jobDrainWg.Wait() // Wait for all the jobs to be dequeued
+
+	var errs []error
+	for err := range errCh {
+		errs = append(errs, err)
+	}
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
 	}
 
 	all := jobs
