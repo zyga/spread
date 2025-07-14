@@ -35,13 +35,43 @@ type Client struct {
 	killTimeout time.Duration
 }
 
-func Dial(server Server, username, password string) (*Client, error) {
+func getSSHKeySigner(sshKey string, sshKeyPass string) (ssh.Signer, error) {
+	// Create the Signer for this private key.
+	// It is not supported the
+	var signer ssh.Signer
+	var err error
+
+	if sshKeyPass != "" {
+		signer, err = ssh.ParsePrivateKeyWithPassphrase([]byte(sshKey), []byte(sshKeyPass))
+	} else {
+		signer, err = ssh.ParsePrivateKey([]byte(sshKey))
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse private key: %v", err)
+	}
+	return signer, nil
+}
+
+func Dial(server Server, username, password string, sshKey string, sshKeyPass string) (*Client, error) {
+	auth := ssh.Password(password)
 	config := &ssh.ClientConfig{
 		User:            username,
-		Auth:            []ssh.AuthMethod{ssh.Password(password)},
+		Auth:            []ssh.AuthMethod{auth},
 		Timeout:         10 * time.Second,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
+
+	// When the sshKey is set, it is used for the authentication
+	if sshKey != "" {
+		signer, err := getSSHKeySigner(sshKey, sshKeyPass)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to parse ssh key: %v", err)
+		}
+		config.Auth = []ssh.AuthMethod{ssh.PublicKeys(signer)}
+		config.HostKeyAlgorithms = []string{ssh.KeyAlgoRSA, ssh.KeyAlgoRSASHA256, ssh.KeyAlgoRSASHA512}
+	}
+
 	addr := server.Address()
 	if !strings.Contains(addr, ":") {
 		addr += ":22"
@@ -1036,7 +1066,7 @@ func waitPortUp(ctx context.Context, what fmt.Stringer, address string) error {
 	return nil
 }
 
-func waitServerUp(ctx context.Context, server Server, username, password string) error {
+func waitServerUp(ctx context.Context, server Server, username, password string, sshKeyFile string, sshKeyPass string) error {
 	var timeout = time.After(5 * time.Minute)
 	var relog = time.NewTicker(2 * time.Minute)
 	defer relog.Stop()
@@ -1045,7 +1075,7 @@ func waitServerUp(ctx context.Context, server Server, username, password string)
 
 	for {
 		debugf("Waiting until %s is listening...", server)
-		client, err := Dial(server, username, password)
+		client, err := Dial(server, username, password, sshKeyFile, sshKeyPass)
 		if err == nil {
 			client.Close()
 			break

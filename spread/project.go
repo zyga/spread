@@ -119,6 +119,9 @@ type System struct {
 	Password string
 	Workers  int
 
+	SSHKey     string `yaml:"ssh-rsa-key"`
+	SSHKeyPass string `yaml:"ssh-key-pass"`
+
 	// Only for Linode and Google so far.
 	Storage Size
 
@@ -1077,6 +1080,20 @@ func (p *Project) Jobs(options *Options) ([]*Job, error) {
 					return nil, err
 				}
 				system.Password = value
+			}
+			if system.SSHKey != "" {
+				value, err := evalone(system.String()+" sshkey", system.SSHKey, cmdcache, false, penv, benv)
+				if err != nil {
+					return nil, err
+				}
+				system.SSHKey = value
+			}
+			if system.SSHKeyPass != "" {
+				value, err := evalone(system.String()+" sshkeypass", system.SSHKeyPass, cmdcache, false, penv, benv)
+				if err != nil {
+					return nil, err
+				}
+				system.SSHKeyPass = value
 			}
 		}
 	}
