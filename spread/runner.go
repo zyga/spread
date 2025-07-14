@@ -3,6 +3,7 @@ package spread
 import (
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -33,6 +34,7 @@ type Options struct {
 	Resend         bool
 	Discard        bool
 	Artifacts      string
+	Logs           string
 	Seed           int64
 	Repeat         int
 	GarbageCollect bool
@@ -502,13 +504,25 @@ func (r *Runner) run(client *Client, job *Job, verb string, context interface{},
 		start = start.Add(1)
 		printft(start, startTime|endTime|startFold|endFold, "Error %s %s (%s) : %v", verb, contextStr, server.Label(), err)
 		if debug != "" {
+			var output []byte
 			start = time.Now()
-			output, err := client.Trace(debug, dir, job.Environment)
+			output, err = client.Trace(debug, dir, job.Environment)
 			if err != nil {
-				printft(start, startTime|endTime|startFold|endFold, "Error debugging %s (%s) : %v", contextStr, server.Label(), err)
+				// The serial output is saved in the logs directory if logs option is not empty
+				// Otherwise just an error message is displayed
+				outputMsg := err.Error()
+				printft(start, startTime|endTime|startFold|endFold, "Error debugging %s (%s) : %v", contextStr, server.Label(), outputErr([]byte(outputMsg), nil))
 			} else if len(output) > 0 {
 				if r.options.NoDebug {
 					outputMsg := "no output"
+					if r.options.Logs != "" {
+						filename := job.Backend.Name + "_" + job.System.Name + "_" + strings.Replace(job.Task.Name, "/", "_", -1) + ".debug.log"
+						err = saveLog(r.options.Logs, filename, output)
+						if err != nil {
+							printft(start, startTime|endTime|startFold|endFold, "Error saving debug output to file %s", filepath.Join(r.options.Logs, filename), err)
+						}
+						outputMsg = "saved to file " + filepath.Join(r.options.Logs, filename)
+					}
 					printft(start, startTime|endTime|startFold|endFold, "Debug output for %s (%s) : %v", contextStr, server.Label(), outputErr([]byte(outputMsg), nil))
 				} else {
 					printft(start, startTime|endTime|startFold|endFold, "Debug output for %s (%s) : %v", contextStr, server.Label(), outputErr(output, nil))
@@ -536,8 +550,13 @@ func (r *Runner) run(client *Client, job *Job, verb string, context interface{},
 	}
 	// Print or save performance output
 	if r.options.Perf {
-		start = start.Add(1)
-		printft(start, startTime|endTime|startFold|endFold, "Output %s %s (%s) :\n%v", verb, contextStr, server.Label(), string(out))
+		if r.options.Logs != "" {
+			filename := job.Backend.Name + "_" + job.System.Name + "_" + verb + "_" + strings.Replace(job.Task.Name, "/", "_", -1) + ".perf.log"
+			err = saveLog(r.options.Logs, filename, out)
+		} else {
+			start = start.Add(1)
+			printft(start, startTime|endTime|startFold|endFold, "Output %s %s (%s) :\n%v", verb, contextStr, server.Label(), string(out))
+		}
 	}
 
 	return true

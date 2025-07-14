@@ -32,6 +32,7 @@ var (
 	restore        = flag.Bool("restore", false, "Run only the restore scripts")
 	discard        = flag.Bool("discard", false, "Discard reused servers without running")
 	artifacts      = flag.String("artifacts", "", "Where to store task artifacts")
+	logs           = flag.String("logs", "", "Where to store generated logs")
 	seed           = flag.Int64("seed", 0, "Seed for job order permutation")
 	repeat         = flag.Int("repeat", 0, "Number of times to repeat each task")
 	garbageCollect = flag.Bool("gc", false, "Garbage collect backend resources when possible")
@@ -98,6 +99,7 @@ func run() error {
 		Restore:        *restore,
 		Discard:        *discard,
 		Artifacts:      *artifacts,
+		Logs:           *logs,
 		Seed:           *seed,
 		Repeat:         *repeat,
 		GarbageCollect: *garbageCollect,

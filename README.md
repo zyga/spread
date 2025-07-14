@@ -26,6 +26,7 @@ Spread
 [LXD backend](#lxd)  
 [QEMU backend](#qemu)  
 [Google backend](#google)  
+[Saving logs](#logs)
 [OpenStack backend](#openstack)
 [Linode backend](#linode)  
 [AdHoc backend](#adhoc)  
@@ -787,6 +788,14 @@ artifacts:
     - some/dir/
 ...
 ```
+
+<a name="logs"/>
+
+## Saving logs
+
+Some backends have the ability of saving some logs, generally when there is an error
+during the allocation or reboot. Logs are saved locally only when the parameter
+`-logs` is added.
 
 
 ### Task-level artifacts

@@ -3,6 +3,8 @@ package spread
 import (
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"time"
 
 	"golang.org/x/net/context"
@@ -68,4 +70,11 @@ func removedSystem(backend *Backend, sysname string) *System {
 		Name:    sysname,
 		Image:   sysname,
 	}
+}
+
+func saveLog(dir string, filename string, output []byte) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dir, filename), output, 0o644)
 }
