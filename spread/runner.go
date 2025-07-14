@@ -63,6 +63,7 @@ type Runner struct {
 	servers  []Server
 	pending  []*Job
 	sequence map[*Job]int
+	last     int
 	stats    stats
 
 	suiteWorkers map[[3]string]int
@@ -75,6 +76,7 @@ func Start(project *Project, options *Options) (*Runner, error) {
 		providers: make(map[string]Provider),
 		reserved:  make(map[string]bool),
 		sequence:  make(map[*Job]int),
+		last:      0,
 
 		suiteWorkers: make(map[[3]string]int),
 	}
@@ -462,9 +464,9 @@ func (r *Runner) run(client *Client, job *Job, verb string, context interface{},
 	defer client.ResetJob()
 	if verb == executing {
 		r.mu.Lock()
-		if r.sequence[job] == 0 {
-			r.sequence[job] = len(r.sequence) + 1
-		}
+		r.sequence[job] = r.last + 1
+		r.last = r.last + 1
+
 		printft(start, startTime, "%s %s (%s) (%d/%d)...", strings.Title(verb), contextStr, server.Label(), r.sequence[job], len(r.pending))
 		r.mu.Unlock()
 	} else {
