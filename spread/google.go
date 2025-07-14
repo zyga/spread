@@ -107,6 +107,20 @@ func (s *googleServer) ReuseData() interface{} {
 	return &s.d
 }
 
+func (s *googleServer) SerialOutput() (string, error) {
+	var err error
+	var result struct {
+		Contents string
+	}
+
+	err = s.p.doz("GET", fmt.Sprintf("/instances/%s/serialPort?port=1", s.d.Name), nil, &result)
+	if err != nil {
+		printf("Cannot get console output for %s: %v", s, err)
+		return "", fmt.Errorf("cannot get console output for %s: %v", s, err)
+	}
+	return result.Contents, nil
+}
+
 const (
 	googleStaging      = "STAGING"
 	googleProvisioning = "PROVISIONING"
