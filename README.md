@@ -31,6 +31,7 @@ Spread
 [AdHoc backend](#adhoc)  
 [More on parallelism](#parallelism)  
 [Repacking and delta uploads](#repacking)  
+[Performance output](#performance)
 
 <a name="why"/>
 
@@ -588,6 +589,15 @@ the number of workers used by all the systems selected for the run.
 
 In case the `-workers` option is not used, the number of workers used is the
 provided for the system in the spread.yaml which is 1 by default.
+
+<a name="performance"/>
+
+## Show performance output
+
+To perform a performance analysis of the tasks executions, Spread is able to
+show detailed information about tasks output including timestamps. To do that
+there is an option `-perf` which by default is false.
+
 
 <a name="passwords">
 
@@ -1274,3 +1284,13 @@ The `rename` and `exclude` settings used above ensure that the tarball that goes
 into `repack` looks like the one offered by GitHub. If needed, the `reroot` entry
 can be used to specify the relative path to a new project root prior to
 repacking.
+<a name="performance"/>
+
+## Performance output
+
+Spread provides detailed output for each task, including timestamped information for every line. When using
+the `-perf` parameter, spread displays the output after each phase prepare/execute/debug/restore is completed.
+Additionally, the output can be saved as a log file by including the `-logs` parameter.
+
+This functionality is particularly useful for tracking execution timings and gaining insight into the behavior
+and performance of individual tasks.

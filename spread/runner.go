@@ -36,6 +36,7 @@ type Options struct {
 	Seed           int64
 	Repeat         int
 	GarbageCollect bool
+	Perf           bool
 	Workers        int
 	Order          bool
 }
@@ -486,7 +487,14 @@ func (r *Runner) run(client *Client, job *Job, verb string, context interface{},
 	}
 	client.SetWarnTimeout(job.WarnTimeoutFor(context))
 	client.SetKillTimeout(job.KillTimeoutFor(context))
-	_, err := client.Trace(script, dir, job.Environment)
+
+	var err error
+	var out []byte
+	if r.options.Perf {
+		out, err = client.Perf(script, dir, job.Environment)
+	} else {
+		_, err = client.Trace(script, dir, job.Environment)
+	}
 	printft(start, endTime, "")
 	if err != nil {
 		// Use a different time so it has a different id on Travis, but keep
@@ -525,6 +533,11 @@ func (r *Runner) run(client *Client, job *Job, verb string, context interface{},
 			printf("Error running debug shell: %v", err)
 		}
 		printf("Continuing...")
+	}
+	// Print or save performance output
+	if r.options.Perf {
+		start = start.Add(1)
+		printft(start, startTime|endTime|startFold|endFold, "Output %s %s (%s) :\n%v", verb, contextStr, server.Label(), string(out))
 	}
 
 	return true
