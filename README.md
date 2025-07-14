@@ -561,6 +561,10 @@ priority: 100
 The larger the priority, the earlier it will be scheduled. The default
 priority is zero, and negative priorities are supported too.
 
+When the `-order` parameter is used, spread executes the tasks in the sequence
+defined by the tasks filter. This option is useful when tasks need to be
+executed sequentially.
+
 
 <a name="repeating"/>
 
