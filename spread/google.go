@@ -159,10 +159,15 @@ const googleStartupScript = `
 echo root:%s | chpasswd
 
 sed -i 's/^\s*#\?\s*\(PermitRootLogin\|PasswordAuthentication\)\>.*/\1 yes/' /etc/ssh/sshd_config
+sed -i 's/^PermitRootLogin=/#PermitRootLogin=/g' /etc/ssh/sshd_config.d/* || true
+sed -i 's/^PasswordAuthentication=/#PasswordAuthentication=/g' /etc/ssh/sshd_config.d/* || true
+test -d /etc/ssh/sshd_config.d && echo 'PermitRootLogin=yes' > /etc/ssh/sshd_config.d/00-spread.conf
+test -d /etc/ssh/sshd_config.d && echo 'PasswordAuthentication=yes' >> /etc/ssh/sshd_config.d/00-spread.conf
 
 pkill -o -HUP sshd || true
 
-echo '` + googleReadyMarker + `' > /dev/ttyS2
+echo -e '\n` + googleReadyMarker + `\n' > /dev/ttyS0 || echo -e '\n` + googleReadyMarker + `\n' > /dev/console
+echo -e '\n` + googleReadyMarker + `\n' > /dev/ttyS2
 `
 
 const googleReadyMarker = "MACHINE-IS-READY"
