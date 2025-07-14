@@ -24,6 +24,7 @@ type Options struct {
 	Reuse          bool
 	ReusePid       int
 	Debug          bool
+	NoDebug        bool
 	Shell          bool
 	ShellBefore    bool
 	ShellAfter     bool
@@ -498,7 +499,12 @@ func (r *Runner) run(client *Client, job *Job, verb string, context interface{},
 			if err != nil {
 				printft(start, startTime|endTime|startFold|endFold, "Error debugging %s (%s) : %v", contextStr, server.Label(), err)
 			} else if len(output) > 0 {
-				printft(start, startTime|endTime|startFold|endFold, "Debug output for %s (%s) : %v", contextStr, server.Label(), outputErr(output, nil))
+				if r.options.NoDebug {
+					outputMsg := "no output"
+					printft(start, startTime|endTime|startFold|endFold, "Debug output for %s (%s) : %v", contextStr, server.Label(), outputErr([]byte(outputMsg), nil))
+				} else {
+					printft(start, startTime|endTime|startFold|endFold, "Debug output for %s (%s) : %v", contextStr, server.Label(), outputErr(output, nil))
+				}
 			}
 		}
 		if r.options.Debug || r.options.ShellAfter {

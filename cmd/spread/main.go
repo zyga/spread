@@ -24,6 +24,7 @@ var (
 	reusePid       = flag.Int("reuse-pid", 0, "Reuse servers from crashed process")
 	resend         = flag.Bool("resend", false, "Resend project content to reused servers")
 	debug          = flag.Bool("debug", false, "Run shell after script errors")
+	noDebug        = flag.Bool("no-debug-output", false, "Debug output is saved to file")
 	shell          = flag.Bool("shell", false, "Run shell instead of task scripts")
 	shellBefore    = flag.Bool("shell-before", false, "Run shell before task scripts")
 	shellAfter     = flag.Bool("shell-after", false, "Run shell after task scripts")
@@ -88,6 +89,7 @@ func run() error {
 		ReusePid:       *reusePid,
 		Resend:         *resend,
 		Debug:          *debug,
+		NoDebug:        *noDebug,
 		Shell:          *shell,
 		ShellBefore:    *shellBefore,
 		ShellAfter:     *shellAfter,
